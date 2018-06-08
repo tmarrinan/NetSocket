@@ -9,15 +9,18 @@ class NetSocket::Server {
 private:
     asio::io_service io_service;
     tcp::acceptor acceptor;
-    std::map<std::string, ClientConnection::pointer> clients;
-    void (*connect_callback)(ClientConnection::pointer client);
+    std::map<std::string, ClientConnection::Pointer> clients;
+    std::function<void(Server&, ClientConnection::Pointer)> connect_callback;
+    std::function<void(Server&, std::string)> disconnect_callback;
 
     void StartAccept();
-    void HandleAccept(ClientConnection::pointer new_connection, const asio::error_code& error);
+    void HandleAccept(ClientConnection::Pointer new_connection, const asio::error_code& error);
 public:
     Server(uint16_t port);
     void Run();
-    void ConnectCallback(void (*callback)(ClientConnection::pointer client));
+    void HandleDisconnect(std::string endpoint);
+    void ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback);
+    void DisconnectCallback(std::function<void(Server&, std::string)> callback);
 };
 
 #endif // __NETSOCKET_SERVER_H_

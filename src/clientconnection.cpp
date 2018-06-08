@@ -1,14 +1,16 @@
 #include "netsocket/clientconnection.h"
 
-NetSocket::ClientConnection::ClientConnection(asio::io_service& io_service) :
+NetSocket::ClientConnection::ClientConnection(Server *server, asio::io_service& io_service) :
+    host(server),
     socket(io_service),
-    read_callback(NULL)
+    read_callback(NULL),
+    disconnect_callback(NULL)
 {
 }
 
-NetSocket::ClientConnection::pointer NetSocket::ClientConnection::Create(asio::io_service& io_service)
+NetSocket::ClientConnection::Pointer NetSocket::ClientConnection::Create(Server *server, asio::io_service& io_service)
 {
-    return pointer(new ClientConnection(io_service));
+    return Pointer(new ClientConnection(server, io_service));
 }
 
 asio::ip::tcp::socket& NetSocket::ClientConnection::Socket()
@@ -49,20 +51,39 @@ void NetSocket::ClientConnection::Read()
 
 void NetSocket::ClientConnection::HandleReadHeader(const asio::error_code& error, size_t bytes_transferred)
 {
-    read_size = ntohl(read_size);
-    read_data = new uint8_t[read_size];
-    asio::async_read(socket, asio::buffer(read_data, read_size), std::bind(&ClientConnection::HandleReadData, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    if (error == asio::error::eof || error == asio::error::connection_reset) // disconnect
+    {
+        if (disconnect_callback) disconnect_callback(Endpoint());
+    }
+    else
+    {
+        read_size = ntohl(read_size);
+        read_data = new uint8_t[read_size];
+        asio::async_read(socket, asio::buffer(read_data, read_size), std::bind(&ClientConnection::HandleReadData, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    }
 }
 
 void NetSocket::ClientConnection::HandleReadData(const asio::error_code& error, size_t bytes_transferred)
 {
-    if (read_callback) read_callback(shared_from_this(), read_data, read_size);
-    else delete[] read_data;
+    if (error == asio::error::eof || error == asio::error::connection_reset) // disconnect
+    {
+        if (disconnect_callback) disconnect_callback(Endpoint());
+    }
+    else
+    {
+        if (read_callback) read_callback(*host, shared_from_this(), read_data, read_size);
+        else delete[] read_data;
 
-    Read();
+        Read();
+    }
 }
 
-void NetSocket::ClientConnection::ReadCallback(void (*callback)(pointer connection, void *data, uint32_t length))
+void NetSocket::ClientConnection::ReadCallback(std::function<void(Server&, Pointer, void*, uint32_t)> callback)
 {
     read_callback = callback;
+}
+
+void NetSocket::ClientConnection::DisconnectCallback(std::function<void(std::string)> callback)
+{
+    disconnect_callback = callback;
 }
