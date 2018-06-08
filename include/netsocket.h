@@ -7,11 +7,9 @@
 
 namespace NetSocket {
     using namespace asio::ip;
-
-    namespace DataType {
-        enum DataType {String, Binary};
-    }
     
+    enum class DataType : uint8_t {String, Binary};
+
     class Server;
     class Client;
     class ClientConnection;

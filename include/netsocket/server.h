@@ -20,6 +20,8 @@ public:
     Server(uint16_t port);
     void Run();
     void Broadcast(std::string message);
+    void Broadcast(const void *message, uint32_t length);
+    //void Broadcast(void *message, uint32_t length);
     void ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback);
     void DisconnectCallback(std::function<void(Server&, std::string)> callback);
 };

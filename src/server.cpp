@@ -43,7 +43,7 @@ void NetSocket::Server::HandleAccept(NetSocket::ClientConnection::Pointer new_co
         clients[new_connection->Endpoint()] = new_connection;
         if (connect_callback) connect_callback(*this, new_connection);
 
-        new_connection->Read();
+        new_connection->Receive();
     }
 
     StartAccept();
@@ -59,7 +59,15 @@ void NetSocket::Server::Broadcast(std::string message)
 {
     for (auto const& it : clients)
     {
-        it.second->Write(message);
+        it.second->Send(message);
+    }
+}
+
+void NetSocket::Server::Broadcast(const void *message, uint32_t length)
+{
+    for (auto const& it : clients)
+    {
+        it.second->Send(message, length);
     }
 }
 
