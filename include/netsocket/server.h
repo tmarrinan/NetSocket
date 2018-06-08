@@ -15,10 +15,11 @@ private:
 
     void StartAccept();
     void HandleAccept(ClientConnection::Pointer new_connection, const asio::error_code& error);
+    void HandleDisconnect(std::string endpoint);
 public:
     Server(uint16_t port);
     void Run();
-    void HandleDisconnect(std::string endpoint);
+    void Broadcast(std::string message);
     void ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback);
     void DisconnectCallback(std::function<void(Server&, std::string)> callback);
 };

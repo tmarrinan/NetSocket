@@ -55,6 +55,14 @@ void NetSocket::Server::HandleDisconnect(std::string endpoint)
     if (disconnect_callback) disconnect_callback(*this, endpoint);
 }
 
+void NetSocket::Server::Broadcast(std::string message)
+{
+    for (auto const& it : clients)
+    {
+        it.second->Write(message);
+    }
+}
+
 void NetSocket::Server::ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback)
 {
     connect_callback = callback;

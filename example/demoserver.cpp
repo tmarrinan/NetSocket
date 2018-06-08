@@ -27,12 +27,13 @@ void OnConnection(NetSocket::Server& server, NetSocket::ClientConnection::Pointe
     std::cout << "New Connection: " << client->Endpoint() << std::endl;
     client->ReadCallback(OnMessage);
 
-    client->Write("Hello there!!!\n");
+    client->Write("Hello there!!!");
 }
 
 void OnDisonnect(NetSocket::Server& server, std::string client_endpoint)
 {
     std::cout << "Client Disconnect: " << client_endpoint << std::endl;
+    server.Broadcast("DISCONNECT --> " + client_endpoint);
 }
 
 void OnMessage(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client, void *data, uint32_t length)
