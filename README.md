@@ -1,6 +1,6 @@
 # NetSocket
 
-C++ Network Socket Interface
+C++11 Network Socket Interface
 
 ### Dependencies
 
