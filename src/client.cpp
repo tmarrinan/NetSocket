@@ -24,6 +24,40 @@ void NetSocket::Client::Poll()
     io_service.poll();
 }
 
+void NetSocket::Client::Send(std::string message)
+{
+    uint8_t header[5];
+    header[0] = static_cast<uint8_t>(DataType::String);
+    uint32_t size = htonl(static_cast<uint32_t>(message.length()));
+    memcpy(header+1, &size, 4);
+
+    std::vector<asio::const_buffer> data;
+    data.push_back(asio::buffer(header, 5));
+    data.push_back(asio::buffer(message));
+
+    asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void NetSocket::Client::Send(const void *message, uint32_t length)
+{
+    uint8_t header[5];
+    header[0] = static_cast<uint8_t>(DataType::Binary);
+    uint32_t size = htonl(length);
+    memcpy(header+1, &size, 4);
+
+    std::vector<asio::const_buffer> data;
+    data.push_back(asio::buffer(header, 5));
+    data.push_back(asio::buffer(message, length));
+
+    asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred)
+{
+    // write complete
+    std::cout << "Write complete" << std::endl;
+}
+
 void NetSocket::Client::Receive()
 {
     asio::async_read(socket, asio::buffer(receive_header, 5), std::bind(&Client::HandleReceiveHeader, this, std::placeholders::_1, std::placeholders::_2));

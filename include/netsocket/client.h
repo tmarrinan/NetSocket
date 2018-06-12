@@ -14,6 +14,7 @@ private:
     std::function<void(Client&, void*, uint32_t)> receive_binary_callback;
     std::function<void(Client&)> disconnect_callback;
 
+    void HandleSend(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveHeader(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveStringData(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveBinaryData(const asio::error_code& error, size_t bytes_transferred);
@@ -22,6 +23,8 @@ public:
     Client(std::string host, uint16_t port);
     void Run();
     void Poll();
+    void Send(std::string message);
+    void Send(const void *message, uint32_t length);
     void Receive();
     void ReceiveStringCallback(std::function<void(Client&, std::string)> callback);
     void ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback);
