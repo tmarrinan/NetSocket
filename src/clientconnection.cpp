@@ -36,12 +36,30 @@ uint16_t NetSocket::ClientConnection::Port()
 
 void NetSocket::ClientConnection::Send(std::string message)
 {
-    asio::async_write(socket, asio::buffer(message), std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    uint8_t header[5];
+    header[0] = static_cast<uint8_t>(DataType::String);
+    uint32_t size = htonl(static_cast<uint32_t>(message.length()));
+    memcpy(header+1, &size, 4);
+
+    std::vector<asio::const_buffer> data;
+    data.push_back(asio::buffer(header, 5));
+    data.push_back(asio::buffer(message));
+
+    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
 }
 
 void NetSocket::ClientConnection::Send(const void *message, uint32_t length)
 {
-    asio::async_write(socket, asio::buffer(message, length), std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    uint8_t header[5];
+    header[0] = static_cast<uint8_t>(DataType::Binary);
+    uint32_t size = htonl(length);
+    memcpy(header+1, &size, 4);
+
+    std::vector<asio::const_buffer> data;
+    data.push_back(asio::buffer(header, 5));
+    data.push_back(asio::buffer(message, length));
+
+    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
 }
 
 void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size_t bytes_transferred)

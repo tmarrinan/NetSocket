@@ -5,27 +5,18 @@ NetSocket::Server::Server(uint16_t port) :
     connect_callback(NULL),
     disconnect_callback(NULL)
 {
-    try
-    {
-        StartAccept();
-        std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
+    StartAccept();
+    std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
 }
 
 void NetSocket::Server::Run()
 {
-    try
-    {
-        io_service.run();
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
+    io_service.run();
+}
+
+void NetSocket::Server::Poll()
+{
+    io_service.poll();
 }
 
 void NetSocket::Server::StartAccept()

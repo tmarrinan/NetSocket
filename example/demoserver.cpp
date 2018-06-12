@@ -30,6 +30,8 @@ void OnConnection(NetSocket::Server& server, NetSocket::ClientConnection::Pointe
     client->ReceiveBinaryCallback(OnBinaryMessage);
 
     client->Send("Hello there!!!");
+    uint8_t buffer[8] = {232, 65, 3, 16, 15, 255, 111, 192};
+    client->Send(buffer, 8);
 }
 
 void OnDisonnect(NetSocket::Server& server, std::string client_endpoint)

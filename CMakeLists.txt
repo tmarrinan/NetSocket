@@ -31,6 +31,7 @@ include_directories (
 add_library(netsocket SHARED 
     src/server.cpp
     src/clientconnection.cpp
+    src/client.cpp
     )
 
 # add libraries to link against
@@ -41,7 +42,7 @@ add_library(netsocket SHARED
 # NetSocket Demo App
 #################################
 
-# add the executable
+# add the server executable
 add_executable(demoserver 
     example/demoserver.cpp
     )
@@ -49,5 +50,16 @@ add_executable(demoserver
 # add libraries to link against
 link_directories(${PROJECT_BINARY_DIR})
 target_link_libraries (demoserver 
+    netsocket
+    )
+
+# add the client executable
+add_executable(democlient 
+    example/democlient.cpp
+    )
+
+# add libraries to link against
+link_directories(${PROJECT_BINARY_DIR})
+target_link_libraries (democlient 
     netsocket
     )
