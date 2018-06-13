@@ -17,13 +17,13 @@ private:
     void HandleAccept(ClientConnection::Pointer new_connection, const asio::error_code& error);
     void HandleDisconnect(std::string endpoint);
 public:
-    Server(uint16_t port);
-    void Run();
-    void Poll();
-    void Broadcast(std::string message);
-    void Broadcast(const void *message, uint32_t length);
-    void ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback);
-    void DisconnectCallback(std::function<void(Server&, std::string)> callback);
+    NETSOCKET_EXPORT Server(uint16_t port);
+    NETSOCKET_EXPORT void Run();
+    NETSOCKET_EXPORT void Poll();
+    NETSOCKET_EXPORT void Broadcast(std::string message);
+    NETSOCKET_EXPORT void Broadcast(const void *message, uint32_t length);
+    NETSOCKET_EXPORT void ConnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback);
+    NETSOCKET_EXPORT void DisconnectCallback(std::function<void(Server&, std::string)> callback);
 };
 
 #endif // __NETSOCKET_SERVER_H_

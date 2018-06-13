@@ -20,11 +20,15 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 #################################
 
 # configure
- set( CMAKE_CXX_FLAGS "-DASIO_STANDALONE -std=c++11" CACHE TYPE INTERNAL FORCE )
-
+if( WIN32 )
+    set( CMAKE_CXX_FLAGS "/EHsc /DASIO_STANDALONE /D_WIN32_WINNT=0x0501 /D_VARIADIC_MAX=10" CACHE TYPE INTERNAL FORCE )
+else()
+    set( CMAKE_CXX_FLAGS "-DASIO_STANDALONE -std=c++11 -D_VARIADIC_MAX=10" CACHE TYPE INTERNAL FORCE )
+endif()
+ 
 # directories to search for .h files
 include_directories (
-    "${PROJECT_SOURCE_DIR}/third_party/asio/include"
+    "${PROJECT_SOURCE_DIR}/third_party/asio-1.12.1/include"
     "${PROJECT_SOURCE_DIR}/include"
     )
 

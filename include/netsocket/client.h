@@ -1,6 +1,11 @@
 #ifndef __NETSOCKET_CLIENT_H_
 #define __NETSOCKET_CLIENT_H_
 
+#ifdef _WIN32
+    #include <Winsock2.h>
+#else
+    #include <arpa/inet.h>
+#endif
 #include "netsocket.h"
 
 class NetSocket::Client {
@@ -14,21 +19,21 @@ private:
     std::function<void(Client&, void*, uint32_t)> receive_binary_callback;
     std::function<void(Client&)> disconnect_callback;
 
-    void HandleSend(const asio::error_code& error, size_t bytes_transferred);
+    void HandleSend(const asio::error_code& error, size_t bytes_transferred, void *send_buffer);
     void HandleReceiveHeader(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveStringData(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveBinaryData(const asio::error_code& error, size_t bytes_transferred);
 
 public:
-    Client(std::string host, uint16_t port);
-    void Run();
-    void Poll();
-    void Send(std::string message);
-    void Send(const void *message, uint32_t length);
-    void Receive();
-    void ReceiveStringCallback(std::function<void(Client&, std::string)> callback);
-    void ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback);
-    void DisconnectCallback(std::function<void(Client&)> callback);
+    NETSOCKET_EXPORT Client(std::string host, uint16_t port);
+    NETSOCKET_EXPORT void Run();
+    NETSOCKET_EXPORT void Poll();
+    NETSOCKET_EXPORT void Send(std::string message);
+    NETSOCKET_EXPORT void Send(const void *message, uint32_t length);
+    NETSOCKET_EXPORT void Receive();
+    NETSOCKET_EXPORT void ReceiveStringCallback(std::function<void(Client&, std::string)> callback);
+    NETSOCKET_EXPORT void ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback);
+    NETSOCKET_EXPORT void DisconnectCallback(std::function<void(Client&)> callback);
 };
 
 #endif // __NETSOCKET_CLIENT_H_

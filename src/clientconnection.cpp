@@ -38,14 +38,18 @@ void NetSocket::ClientConnection::Send(std::string message)
 {
     uint8_t header[5];
     header[0] = static_cast<uint8_t>(DataType::String);
-    uint32_t size = htonl(static_cast<uint32_t>(message.length()));
+	uint32_t length = message.length() + 1;
+    uint32_t size = htonl(static_cast<uint32_t>(length));
     memcpy(header+1, &size, 4);
+
+	char *buffer = new char[length];
+	memcpy(buffer, message.c_str(), length);
 
     std::vector<asio::const_buffer> data;
     data.push_back(asio::buffer(header, 5));
-    data.push_back(asio::buffer(message));
+    data.push_back(asio::buffer(buffer, length));
 
-    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
 }
 
 void NetSocket::ClientConnection::Send(const void *message, uint32_t length)
@@ -55,17 +59,21 @@ void NetSocket::ClientConnection::Send(const void *message, uint32_t length)
     uint32_t size = htonl(length);
     memcpy(header+1, &size, 4);
 
+	uint32_t *buffer = new uint32_t[length];
+	memcpy(buffer, message, length);
+
     std::vector<asio::const_buffer> data;
     data.push_back(asio::buffer(header, 5));
-    data.push_back(asio::buffer(message, length));
+    data.push_back(asio::buffer(buffer, length));
 
-    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
 }
 
-void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size_t bytes_transferred)
+void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size_t bytes_transferred, void *send_buffer)
 {
     // write complete
     std::cout << "Write complete" << std::endl;
+	delete[] send_buffer;
 }
 
 void NetSocket::ClientConnection::Receive()

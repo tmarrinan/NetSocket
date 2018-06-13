@@ -6,6 +6,12 @@
 #include <vector>
 #include <asio.hpp>
 
+#ifdef _WIN32
+    #define NETSOCKET_EXPORT __declspec(dllexport)
+#else
+    #define NETSOCKET_EXPORT
+#endif
+
 namespace NetSocket {
     using namespace asio::ip;
     
