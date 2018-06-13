@@ -19,7 +19,7 @@ private:
     std::function<void(Client&, void*, uint32_t)> receive_binary_callback;
     std::function<void(Client&)> disconnect_callback;
 
-    void HandleSend(const asio::error_code& error, size_t bytes_transferred, void *send_buffer);
+    void HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer);
     void HandleReceiveHeader(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveStringData(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveBinaryData(const asio::error_code& error, size_t bytes_transferred);

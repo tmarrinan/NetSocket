@@ -32,7 +32,7 @@ void NetSocket::Client::Send(std::string message)
 	uint32_t size = htonl(static_cast<uint32_t>(length));
 	memcpy(header + 1, &size, 4);
 
-	char *buffer = new char[length];
+	uint8_t *buffer = new uint8_t[length];
 	memcpy(buffer, message.c_str(), length);
 
 	std::vector<asio::const_buffer> data;
@@ -49,7 +49,7 @@ void NetSocket::Client::Send(const void *message, uint32_t length)
 	uint32_t size = htonl(length);
 	memcpy(header + 1, &size, 4);
 
-	uint32_t *buffer = new uint32_t[length];
+	uint8_t *buffer = new uint8_t[length];
 	memcpy(buffer, message, length);
 
 	std::vector<asio::const_buffer> data;
@@ -59,7 +59,7 @@ void NetSocket::Client::Send(const void *message, uint32_t length)
     asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
 }
 
-void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred, void *send_buffer)
+void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer)
 {
     // write complete
     std::cout << "Write complete" << std::endl;
