@@ -24,6 +24,7 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 
 # directories to search for .h files
 include_directories (
+    "${PROJECT_SOURCE_DIR}/third_party/asio/include"
     "${PROJECT_SOURCE_DIR}/include"
     )
 
