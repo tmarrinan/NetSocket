@@ -52,21 +52,30 @@ void NetSocket::ClientConnection::Send(std::string message)
     asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
 }
 
-void NetSocket::ClientConnection::Send(const void *message, uint32_t length)
+void NetSocket::ClientConnection::Send(const void *message, uint32_t length, CopyMode mode)
 {
-    uint8_t header[5];
-    header[0] = static_cast<uint8_t>(DataType::Binary);
-    uint32_t size = htonl(length);
-    memcpy(header+1, &size, 4);
+    if (mode == CopyMode::MemCopy)
+    {
+        uint8_t *buffer = new uint8_t[5 + length];
+        buffer[0] = static_cast<uint8_t>(DataType::Binary);
+        uint32_t size = htonl(length);
+        memcpy(buffer+1, &size, 4);
+        memcpy(buffer+5, message, length);
 
-	uint8_t *buffer = new uint8_t[length];
-	memcpy(buffer, message, length);
+        asio::async_write(socket, asio::buffer(buffer, 5  +length), std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
+    }
+    else
+    {
+        uint8_t *buffer = new uint8_t[5];
+        buffer[0] = static_cast<uint8_t>(DataType::Binary);
+        uint32_t size = htonl(length);
+        memcpy(buffer+1, &size, 4);
+        std::vector<asio::const_buffer> data;
+        data.push_back(asio::buffer(buffer, 5));
+        data.push_back(asio::buffer(message, length));
 
-    std::vector<asio::const_buffer> data;
-    data.push_back(asio::buffer(header, 5));
-    data.push_back(asio::buffer(buffer, length));
-
-    asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
+        asio::async_write(socket, data, std::bind(&ClientConnection::HandleSend, shared_from_this(), std::placeholders::_1, std::placeholders::_2, buffer));
+    }
 }
 
 void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer)

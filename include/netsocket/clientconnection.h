@@ -36,7 +36,7 @@ public:
     NETSOCKET_EXPORT std::string IpAddress();
     NETSOCKET_EXPORT uint16_t Port();
     NETSOCKET_EXPORT void Send(std::string message);
-    NETSOCKET_EXPORT void Send(const void *message, uint32_t length);
+    NETSOCKET_EXPORT void Send(const void *message, uint32_t length, CopyMode mode);
     NETSOCKET_EXPORT void Receive();
     NETSOCKET_EXPORT void ReceiveStringCallback(std::function<void(Server&, Pointer, std::string)> callback);
     NETSOCKET_EXPORT void ReceiveBinaryCallback(std::function<void(Server&, Pointer, void*, uint32_t)> callback);

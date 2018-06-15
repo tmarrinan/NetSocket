@@ -27,43 +27,52 @@ void NetSocket::Client::Poll()
 void NetSocket::Client::Send(std::string message)
 {
     uint8_t header[5];
-	header[0] = static_cast<uint8_t>(DataType::String);
-	uint32_t length = message.length() + 1;
-	uint32_t size = htonl(static_cast<uint32_t>(length));
-	memcpy(header + 1, &size, 4);
+    header[0] = static_cast<uint8_t>(DataType::String);
+    uint32_t length = message.length() + 1;
+    uint32_t size = htonl(static_cast<uint32_t>(length));
+    memcpy(header + 1, &size, 4);
 
-	uint8_t *buffer = new uint8_t[length];
-	memcpy(buffer, message.c_str(), length);
+    uint8_t *buffer = new uint8_t[length];
+    memcpy(buffer, message.c_str(), length);
 
-	std::vector<asio::const_buffer> data;
-	data.push_back(asio::buffer(header, 5));
-	data.push_back(asio::buffer(buffer, length));
-
-	asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
-}
-
-void NetSocket::Client::Send(const void *message, uint32_t length)
-{
-	uint8_t header[5];
-	header[0] = static_cast<uint8_t>(DataType::Binary);
-	uint32_t size = htonl(length);
-	memcpy(header + 1, &size, 4);
-
-	uint8_t *buffer = new uint8_t[length];
-	memcpy(buffer, message, length);
-
-	std::vector<asio::const_buffer> data;
-	data.push_back(asio::buffer(header, 5));
-	data.push_back(asio::buffer(buffer, length));
+    std::vector<asio::const_buffer> data;
+    data.push_back(asio::buffer(header, 5));
+    data.push_back(asio::buffer(buffer, length));
 
     asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+}
+
+void NetSocket::Client::Send(const void *message, uint32_t length, CopyMode mode)
+{
+    if (mode == CopyMode::MemCopy)
+    {
+        uint8_t *buffer = new uint8_t[5 + length];
+        buffer[0] = static_cast<uint8_t>(DataType::Binary);
+        uint32_t size = htonl(length);
+        memcpy(buffer+1, &size, 4);
+        memcpy(buffer+5, message, length);
+
+        asio::async_write(socket, asio::buffer(buffer, 5  +length), std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+    }
+    else
+    {
+        uint8_t *buffer = new uint8_t[5];
+        buffer[0] = static_cast<uint8_t>(DataType::Binary);
+        uint32_t size = htonl(length);
+        memcpy(buffer+1, &size, 4);
+        std::vector<asio::const_buffer> data;
+        data.push_back(asio::buffer(buffer, 5));
+        data.push_back(asio::buffer(message, length));
+
+        asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+    }
 }
 
 void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer)
 {
     // write complete
     std::cout << "Write complete" << std::endl;
-	delete[] send_buffer;
+    delete[] send_buffer;
 }
 
 void NetSocket::Client::Receive()

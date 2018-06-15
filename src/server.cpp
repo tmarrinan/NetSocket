@@ -54,11 +54,11 @@ void NetSocket::Server::Broadcast(std::string message)
     }
 }
 
-void NetSocket::Server::Broadcast(const void *message, uint32_t length)
+void NetSocket::Server::Broadcast(const void *message, uint32_t length, CopyMode mode)
 {
     for (auto const& it : clients)
     {
-        it.second->Send(message, length);
+        it.second->Send(message, length, mode);
     }
 }
 

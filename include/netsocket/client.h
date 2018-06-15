@@ -29,7 +29,7 @@ public:
     NETSOCKET_EXPORT void Run();
     NETSOCKET_EXPORT void Poll();
     NETSOCKET_EXPORT void Send(std::string message);
-    NETSOCKET_EXPORT void Send(const void *message, uint32_t length);
+    NETSOCKET_EXPORT void Send(const void *message, uint32_t length, CopyMode mode);
     NETSOCKET_EXPORT void Receive();
     NETSOCKET_EXPORT void ReceiveStringCallback(std::function<void(Client&, std::string)> callback);
     NETSOCKET_EXPORT void ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback);

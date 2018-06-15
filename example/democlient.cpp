@@ -39,5 +39,5 @@ void OnBinaryMessage(NetSocket::Client& client, void *data, uint32_t length)
     std::cout << "Binary: 0x" << std::hex << static_cast<int>(message[0]) << std::dec << "... [" << length << " bytes]" << std::endl;
 
     uint8_t buffer[6] = {65, 118, 5, 192, 42, 220};
-    client.Send(buffer, 6);
+    client.Send(buffer, 6, NetSocket::CopyMode::MemCopy);
 }

@@ -1,6 +1,6 @@
 # NetSocket
 
-C++11 Network Socket Interface
+Cross-platform C++11 Network Socket Interface
 
 ### Dependencies
 
@@ -16,7 +16,7 @@ See example directory for sample server and client applications.
 
 ### Interfacing with Other Libraries / Languages
 
-The NetSocket send and receive methods use a simple custom protocol. A 5-byte header is prepended to all messages with information about the data type (string vs binary) and message size.
+NetSocket send and receive methods use a simple custom protocol. A 5-byte header is prepended to all messages with information about the data type (string vs binary) and message size.
 
 ##### Header
 
