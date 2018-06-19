@@ -40,7 +40,11 @@ add_library(netsocket SHARED
     )
 
 # add libraries to link against
-# n/a
+if( UNIX AND NOT APPLE )
+    target_link_libraries (netsocket 
+        pthread
+        )
+endif()
 
 
 #################################
