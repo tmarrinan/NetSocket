@@ -12,7 +12,6 @@ class NetSocket::Client {
 private:
     asio::io_service io_service;
     tcp::socket socket;
-    Protocol network_protocol;
     uint8_t receive_header[5];
     uint32_t receive_size;
     uint8_t *receive_data;
@@ -26,7 +25,7 @@ private:
     void HandleReceiveBinaryData(const asio::error_code& error, size_t bytes_transferred);
 
 public:
-    NETSOCKET_EXPORT Client(std::string host, uint16_t port, Protocol protocol);
+    NETSOCKET_EXPORT Client(std::string host, uint16_t port);
     NETSOCKET_EXPORT void Run();
     NETSOCKET_EXPORT void Poll();
     NETSOCKET_EXPORT void Send(std::string message);

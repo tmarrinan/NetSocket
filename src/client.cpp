@@ -1,7 +1,6 @@
 #include "netsocket/client.h"
 
-NetSocket::Client::Client(std::string host, uint16_t port, Protocol protocol) :
-    network_protocol(protocol),
+NetSocket::Client::Client(std::string host, uint16_t port) :
     socket(io_service),
     receive_string_callback(NULL),
     receive_binary_callback(NULL),
