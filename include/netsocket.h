@@ -14,7 +14,8 @@
 
 namespace NetSocket {
     using namespace asio::ip;
-    
+
+    enum class Protocol : uint8_t {NetSocket, Http};
     enum class DataType : uint8_t {String, Binary};
     enum class CopyMode : uint8_t {MemCopy, ZeroCopy};
 

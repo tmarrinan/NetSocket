@@ -8,7 +8,7 @@ void OnBinaryMessage(NetSocket::Client& client, void *data, uint32_t length);
 int main(int argc, char **argv)
 {
     // create client
-    NetSocket::Client client("localhost", 8000);
+    NetSocket::Client client("localhost", 8000, NetSocket::Protocol::NetSocket);
 
     // add callback functions
     client.DisconnectCallback(OnDisconnect);
