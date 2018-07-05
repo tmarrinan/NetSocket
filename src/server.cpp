@@ -17,8 +17,8 @@ NetSocket::Server::Server(uint16_t port, const char *tls_cert, const char *dh) :
         // `openssl dhparam -out dh.pem 2048`
         context.set_options(asio::ssl::context::default_workarounds |
                             asio::ssl::context::no_sslv2 |
-                            //asio::ssl::context::no_sslv3 |
-                            //asio::ssl::context::no_tlsv1 |
+                            asio::ssl::context::no_sslv3 |
+                            asio::ssl::context::no_tlsv1 |
                             asio::ssl::context::single_dh_use);
         context.set_password_callback(std::bind(&Server::GetPassword, this));
         context.use_certificate_chain_file(tls_cert);
