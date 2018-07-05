@@ -19,9 +19,10 @@ private:
     uint32_t receive_size;
     uint8_t *receive_data;
     std::list<asio::const_buffer> send_queue;
+    std::function<void(Client&)> connect_callback;
+    std::function<void(Client&)> disconnect_callback;
     std::function<void(Client&, std::string)> receive_string_callback;
     std::function<void(Client&, void*, uint32_t)> receive_binary_callback;
-    std::function<void(Client&)> disconnect_callback;
 
     bool HandleVerify(bool preverified, asio::ssl::verify_context& ctx);
     void HandleConnect(const asio::error_code& error, tcp::resolver::iterator iterator);
@@ -38,9 +39,10 @@ public:
     NETSOCKET_EXPORT void Send(std::string message);
     NETSOCKET_EXPORT void Send(const void *message, uint32_t length, CopyMode mode);
     NETSOCKET_EXPORT void Receive();
+    NETSOCKET_EXPORT void ConnectCallback(std::function<void(Client&)> callback);
+    NETSOCKET_EXPORT void DisconnectCallback(std::function<void(Client&)> callback);
     NETSOCKET_EXPORT void ReceiveStringCallback(std::function<void(Client&, std::string)> callback);
     NETSOCKET_EXPORT void ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback);
-    NETSOCKET_EXPORT void DisconnectCallback(std::function<void(Client&)> callback);
 };
 
 #endif // __NETSOCKET_CLIENT_H_

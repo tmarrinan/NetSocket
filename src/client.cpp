@@ -2,9 +2,10 @@
 
 NetSocket::Client::Client(std::string host, uint16_t port, bool secure) :
     context(asio::ssl::context::sslv23),
+    connect_callback(NULL),
+    disconnect_callback(NULL),
     receive_string_callback(NULL),
-    receive_binary_callback(NULL),
-    disconnect_callback(NULL)
+    receive_binary_callback(NULL)
 {
     if (secure)
     {
@@ -46,6 +47,7 @@ void NetSocket::Client::HandleHandshake(const asio::error_code& error)
 {
     if (!error)
     {
+        if (connect_callback) connect_callback(*this);
         Receive();
     }
     else
@@ -203,6 +205,16 @@ void NetSocket::Client::HandleReceiveBinaryData(const asio::error_code& error, s
     }
 }
 
+void NetSocket::Client::ConnectCallback(std::function<void(Client&)> callback)
+{
+    connect_callback = callback;
+}
+
+void NetSocket::Client::DisconnectCallback(std::function<void(Client&)> callback)
+{
+    disconnect_callback = callback;
+}
+
 void NetSocket::Client::ReceiveStringCallback(std::function<void(Client&, std::string)> callback)
 {
     receive_string_callback = callback;
@@ -211,9 +223,4 @@ void NetSocket::Client::ReceiveStringCallback(std::function<void(Client&, std::s
 void NetSocket::Client::ReceiveBinaryCallback(std::function<void(Client&, void*, uint32_t)> callback)
 {
     receive_binary_callback = callback;
-}
-
-void NetSocket::Client::DisconnectCallback(std::function<void(Client&)> callback)
-{
-    disconnect_callback = callback;
 }

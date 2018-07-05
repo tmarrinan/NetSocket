@@ -1,6 +1,7 @@
 #include <iostream>
 #include "netsocket/client.h"
 
+void OnConnect(NetSocket::Client& client);
 void OnDisconnect(NetSocket::Client& client);
 void OnStringMessage(NetSocket::Client& client, std::string message);
 void OnBinaryMessage(NetSocket::Client& client, void *data, uint32_t length);
@@ -11,6 +12,7 @@ int main(int argc, char **argv)
     NetSocket::Client client("localhost", 8000, false);
 
     // add callback functions
+    client.ConnectCallback(OnConnect);
     client.DisconnectCallback(OnDisconnect);
     client.ReceiveStringCallback(OnStringMessage);
     client.ReceiveBinaryCallback(OnBinaryMessage);
@@ -19,6 +21,11 @@ int main(int argc, char **argv)
     client.Run();
 
     return 0;
+}
+
+void OnConnect(NetSocket::Client& client)
+{
+    std::cout << "CONNECT to server" << std::endl;
 }
 
 void OnDisconnect(NetSocket::Client& client)
