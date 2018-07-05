@@ -7,6 +7,8 @@
     #include <arpa/inet.h>
 #endif
 #include "netsocket.h"
+#include "netsocket/basicsocket.h"
+#include "netsocket/securesocket.h"
 
 class NetSocket::ClientConnection : public std::enable_shared_from_this<NetSocket::ClientConnection>
 {
@@ -15,15 +17,17 @@ public:
 
 private:
     Server *host;
-    tcp::socket socket;
+    NetSocket::Socket *socket;
     uint8_t receive_header[5];
     uint32_t receive_size;
     uint8_t *receive_data;
+    std::list<asio::const_buffer> send_queue;
     std::function<void(Server&, Pointer, std::string)> receive_string_callback;
     std::function<void(Server&, Pointer, void*, uint32_t)> receive_binary_callback;
     std::function<void(std::string)> disconnect_callback;
 
     ClientConnection(Server *server, asio::io_service& io_service);
+    ClientConnection(Server *server, asio::io_service& io_service, asio::ssl::context& context);
     void HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer);
     void HandleReceiveHeader(const asio::error_code& error, size_t bytes_transferred);
     void HandleReceiveStringData(const asio::error_code& error, size_t bytes_transferred);
@@ -31,7 +35,8 @@ private:
 
 public:
     NETSOCKET_EXPORT static Pointer Create(Server *server, asio::io_service& io_service);
-    NETSOCKET_EXPORT tcp::socket& Socket();
+    NETSOCKET_EXPORT static Pointer Create(Server *server, asio::io_service& io_service, asio::ssl::context& context);
+    NETSOCKET_EXPORT NetSocket::Socket* Socket();
     NETSOCKET_EXPORT std::string Endpoint();
     NETSOCKET_EXPORT std::string IpAddress();
     NETSOCKET_EXPORT uint16_t Port();

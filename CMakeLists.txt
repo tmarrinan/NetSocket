@@ -25,11 +25,15 @@ if( WIN32 )
 else()
     set( CMAKE_CXX_FLAGS "-std=c++11 -DASIO_STANDALONE -D_VARIADIC_MAX=10" CACHE TYPE INTERNAL FORCE )
 endif()
+
+# find OpenSSL
+find_package(OpenSSL REQUIRED)
  
 # directories to search for .h files
 include_directories (
     "${PROJECT_SOURCE_DIR}/third_party/asio-1.12.1/include"
     "${PROJECT_SOURCE_DIR}/include"
+    "${OPENSSL_INCLUDE_DIR}"
     )
 
 # add the library
@@ -37,12 +41,20 @@ add_library(netsocket SHARED
     src/server.cpp
     src/clientconnection.cpp
     src/client.cpp
+    src/socket.cpp
+    src/basicsocket.cpp
+    src/securesocket.cpp
     )
 
 # add libraries to link against
 if( UNIX AND NOT APPLE )
     target_link_libraries (netsocket 
+        ${OPENSSL_LIBRARIES}
         pthread
+        )
+else()
+    target_link_libraries (netsocket 
+        ${OPENSSL_LIBRARIES}
         )
 endif()
 

@@ -22,7 +22,8 @@ int main(int argc, char **argv)
     buffer[7] = 192;
 
     // create server
-    NetSocket::Server server(port);
+    NetSocket::Server server(port, NULL, NULL); // basic - no encryption
+    //NetSocket::Server server(port, "../example/keys/server_crt_key.pem", "../example/keys/dh_2048.pem"); // tls encryption
     
     // add callback functions
     server.ConnectCallback(OnConnection);
