@@ -1,4 +1,5 @@
 #include <iostream>
+#include "netsocket.h"
 #include "netsocket/server.h"
 
 void OnConnection(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client);
@@ -21,9 +22,14 @@ int main(int argc, char **argv)
     buffer[6] = 111;
     buffer[7] = 192;
 
+    // create server options (encrypt?)
+    NetSocket::ServerOptions options = NetSocket::CreateServerOptions();
+    options.flags = NetSocket::GeneralFlags::None;
+    //options.server_cert = "../example/keys/server_crt_key.pem";
+    //options.dh_file = "../example/keys/dh_2048.pem";
+    //options.flags = NetSocket::ServerFlags::NoSslV2 | NetSocket::ServerFlags::NoSslV3 | NetSocket::ServerFlags::NoTlsV1 | NetSocket::ServerFlags::NoTlsV1_1;
     // create server
-    NetSocket::Server server(port, NULL, NULL); // basic - no encryption
-    //NetSocket::Server server(port, "../example/keys/server_crt_key.pem", "../example/keys/dh_2048.pem"); // tls encryption
+    NetSocket::Server server(port, options);
     
     // add callback functions
     server.ConnectCallback(OnConnection);

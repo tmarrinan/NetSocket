@@ -10,6 +10,7 @@ private:
     asio::io_service io_service;
     tcp::acceptor acceptor;
     asio::ssl::context context;
+    std::string key_passwd;
     bool secure;
     std::map<std::string, ClientConnection::Pointer> clients;
     std::function<void(Server&, ClientConnection::Pointer)> connect_callback;
@@ -21,7 +22,7 @@ private:
     void HandleHandshake(NetSocket::ClientConnection::Pointer new_connection, const asio::error_code& error);
     void HandleDisconnect(std::string endpoint);
 public:
-    NETSOCKET_EXPORT Server(uint16_t port, const char *tls_cert, const char *dh);
+    NETSOCKET_EXPORT Server(uint16_t port, ServerOptions& options);
     NETSOCKET_EXPORT void Run();
     NETSOCKET_EXPORT void Poll();
     NETSOCKET_EXPORT void Broadcast(std::string message);

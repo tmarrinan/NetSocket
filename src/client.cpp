@@ -1,17 +1,27 @@
 #include "netsocket/client.h"
 
-NetSocket::Client::Client(std::string host, uint16_t port, bool secure) :
+NetSocket::Client::Client(std::string host, uint16_t port, NetSocket::ClientOptions& options) :
     context(asio::ssl::context::sslv23),
     connect_callback(NULL),
     disconnect_callback(NULL),
     receive_string_callback(NULL),
     receive_binary_callback(NULL)
 {
-    if (secure)
+    if (options.secure)
     {
-        socket = new NetSocket::SecureSocket(io_service, context);
-        //context.load_verify_file(ca);
-        //socket = new NetSocket::SecureSocket(io_service, context, std::bind(&Client::HandleVerify, this, std::placeholders::_1, std::placeholders::_2));
+        //socket = new NetSocket::SecureSocket(io_service, context);
+        int mode;
+        if (options.flags & NetSocket::ClientFlags::VerifyPeer)
+        {
+            mode = asio::ssl::verify_peer;
+        }
+        else
+        {
+            mode = asio::ssl::verify_none;
+        }
+        context.set_default_verify_paths();
+        context.set_verify_mode(mode);
+        socket = new NetSocket::SecureSocket(io_service, context, std::bind(&Client::HandleVerify, this, std::placeholders::_1, std::placeholders::_2));
     }
     else
     {
@@ -31,7 +41,10 @@ bool NetSocket::Client::HandleVerify(bool preverified, asio::ssl::verify_context
     X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
     X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
     std::cout << "Verifying: " << subject_name << std::endl;
-    printf("verify: %d\n", preverified);
+    if (!preverified)
+    {
+        fprintf(stderr, "Verification failed %d\n", preverified);
+    }
     return preverified;
 }
 

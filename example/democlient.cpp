@@ -1,4 +1,5 @@
 #include <iostream>
+#include "netsocket.h"
 #include "netsocket/client.h"
 
 void OnConnect(NetSocket::Client& client);
@@ -9,7 +10,11 @@ void OnBinaryMessage(NetSocket::Client& client, void *data, uint32_t length);
 int main(int argc, char **argv)
 {
     // create client
-    NetSocket::Client client("localhost", 8000, false);
+    NetSocket::ClientOptions options = NetSocket::CreateClientOptions();
+    options.secure = false;
+    options.flags = NetSocket::GeneralFlags::None; 
+    //options.flags = NetSocket::ClientFlags::VerifyPeer;
+    NetSocket::Client client("localhost", 8000, options);
 
     // add callback functions
     client.ConnectCallback(OnConnect);

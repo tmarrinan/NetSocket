@@ -33,7 +33,7 @@ private:
     void HandleReceiveBinaryData(const asio::error_code& error, size_t bytes_transferred);
 
 public:
-    NETSOCKET_EXPORT Client(std::string host, uint16_t port, bool secure);
+    NETSOCKET_EXPORT Client(std::string host, uint16_t port, ClientOptions& options);
     NETSOCKET_EXPORT void Run();
     NETSOCKET_EXPORT void Poll();
     NETSOCKET_EXPORT void Send(std::string message);

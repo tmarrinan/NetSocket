@@ -1,13 +1,13 @@
 #include "netsocket/server.h"
 
-NetSocket::Server::Server(uint16_t port, const char *tls_cert, const char *dh) :
+NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
     acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
     context(asio::ssl::context::sslv23),
     secure(false),
     connect_callback(NULL),
     disconnect_callback(NULL)
 {
-    if (tls_cert != NULL)
+    if (options.server_cert)
     {
         // To generate keys:
         // `openssl req -new -newkey rsa:2048 -nodes -out ca.csr -keyout ca.key`
@@ -15,15 +15,25 @@ NetSocket::Server::Server(uint16_t port, const char *tls_cert, const char *dh) :
         // `cat ca.crt ca.key > server_crt_key.pem`
         // To generate dh file:
         // `openssl dhparam -out dh.pem 2048`
-        context.set_options(asio::ssl::context::default_workarounds |
-                            asio::ssl::context::no_sslv2 |
-                            asio::ssl::context::no_sslv3 |
-                            asio::ssl::context::no_tlsv1 |
-                            asio::ssl::context::single_dh_use);
+        if (options.encrypted_key_passwd)
+        {
+            key_passwd = std::string(options.encrypted_key_passwd);
+        }
+        else
+        {
+            key_passwd = std::string("test");
+        }
+        long ssl_opts = asio::ssl::context::default_workarounds | asio::ssl::context::single_dh_use;
+        if (options.flags & NetSocket::ServerFlags::NoSslV2) ssl_opts |= asio::ssl::context::no_sslv2;
+        if (options.flags & NetSocket::ServerFlags::NoSslV3) ssl_opts |= asio::ssl::context::no_sslv3;
+        if (options.flags & NetSocket::ServerFlags::NoTlsV1) ssl_opts |= asio::ssl::context::no_tlsv1;
+        if (options.flags & NetSocket::ServerFlags::NoTlsV1_1) ssl_opts |= asio::ssl::context::no_tlsv1_1;
+        if (options.flags & NetSocket::ServerFlags::NoTlsV1_2) ssl_opts |= asio::ssl::context::no_tlsv1_2;
+        context.set_options(ssl_opts);
         context.set_password_callback(std::bind(&Server::GetPassword, this));
-        context.use_certificate_chain_file(tls_cert);
-        context.use_private_key_file(tls_cert, asio::ssl::context::pem);
-        context.use_tmp_dh_file(dh);
+        context.use_certificate_chain_file(options.server_cert);
+        context.use_private_key_file(options.server_cert, asio::ssl::context::pem);
+        context.use_tmp_dh_file(options.dh_file);
         const char *ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-"
                               "GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-"
                               "ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-"
@@ -53,7 +63,7 @@ void NetSocket::Server::Poll()
 
 std::string NetSocket::Server::GetPassword()
 {
-    return "test";
+    return key_passwd;
 }
 
 void NetSocket::Server::StartAccept()

@@ -8,7 +8,8 @@ NetSocket::SecureSocket::SecureSocket(asio::io_service& io_service, asio::ssl::c
 NetSocket::SecureSocket::SecureSocket(asio::io_service& io_service, asio::ssl::context& context, std::function<bool(bool, asio::ssl::verify_context&)> verify) :
     secure_socket(io_service, context)
 {
-    secure_socket.set_verify_mode(asio::ssl::verify_peer);
+    //secure_socket.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
+    secure_socket.set_verify_mode(asio::ssl::verify_none);
     secure_socket.set_verify_callback(verify);
 }
 

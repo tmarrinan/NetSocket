@@ -37,7 +37,8 @@ include_directories (
     )
 
 # add the library
-add_library(netsocket SHARED 
+add_library(netsocket SHARED
+    src/netsocket.cpp 
     src/server.cpp
     src/clientconnection.cpp
     src/client.cpp
