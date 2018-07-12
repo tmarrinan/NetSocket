@@ -32,7 +32,7 @@ namespace NetSocket {
     enum DataType : uint8_t {String, Binary};
     enum CopyMode : uint8_t {MemCopy, ZeroCopy};
     enum GeneralFlags: uint16_t {None = 0x00};
-    enum ServerFlags : uint16_t {NoSslV2 = 0x01, NoSslV3 = 0x02, NoTlsV1 = 0x04, NoTlsV1_1 = 0x08, NoTlsV1_2 = 0x10};
+    enum ServerFlags : uint16_t {NoSslV2 = 0x01, NoSslV3 = 0x02, NoTlsV1 = 0x04, NoTlsV1_1 = 0x08, NoTlsV1_2 = 0x10, UseCallbacks = 0x20};
     enum ClientFlags : uint16_t {VerifyPeer = 0x01};
 
     class Server;

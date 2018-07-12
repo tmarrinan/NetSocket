@@ -2,25 +2,10 @@
 #include "netsocket.h"
 #include "netsocket/server.h"
 
-void OnConnection(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client);
-void OnDisonnect(NetSocket::Server& server, std::string client_endpoint);
-void OnStringMessage(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client, std::string message);
-void OnBinaryMessage(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client, void *data, uint32_t length);
-
-uint8_t *buffer;
-
 int main(int argc, char **argv)
 {
     uint16_t port = 8000;
-    buffer = new uint8_t[8];
-    buffer[0] = 232;
-    buffer[1] = 65;
-    buffer[2] = 3; 
-    buffer[3] = 16;
-    buffer[4] = 15;
-    buffer[5] = 255;
-    buffer[6] = 111;
-    buffer[7] = 192;
+    uint8_t buffer[8] = {232, 65, 3, 16, 15, 255, 111, 192};
 
     // create server options (encrypt?)
     NetSocket::ServerOptions options = NetSocket::CreateServerOptions();
@@ -31,39 +16,32 @@ int main(int argc, char **argv)
     // create server
     NetSocket::Server server(port, options);
     
-    // add callback functions
-    server.ConnectCallback(OnConnection);
-    server.DisconnectCallback(OnDisonnect);
-    
-    // run server indefinitely
-    server.Run();
+    // event loop
+    while (server.Alive())
+    {
+        NetSocket::Server::Event event = server.WaitForNextEvent();
+        uint8_t* bin = reinterpret_cast<uint8_t*>(event.binary_data);
+        switch (event.type)
+        {
+            case NetSocket::Server::EventType::Connect:
+                std::cout << "New Connection: " << event.client->Endpoint() << std::endl;
+                event.client->Send("Hello there!!!");
+                event.client->Send(buffer, 8, NetSocket::CopyMode::ZeroCopy);
+                break;
+            case NetSocket::Server::EventType::Disconnect:
+                std::cout << "Client Disconnect: " << event.client->Endpoint() << std::endl;
+                server.Broadcast("DISCONNECT --> " + event.client->Endpoint());
+                break;
+            case NetSocket::Server::EventType::ReceiveString:
+                std::cout << "String: " << event.string_data << std::endl;
+                break;
+            case NetSocket::Server::EventType::ReceiveBinary:
+                std::cout << "Binary: 0x" << std::hex << static_cast<int>(bin[0]) << std::dec << "... [" << event.data_length << " bytes]" << std::endl;
+                break;
+            default:
+                break;
+        }
+    }
 
     return 0;
-}
-
-void OnConnection(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client)
-{
-    std::cout << "New Connection: " << client->Endpoint() << std::endl;
-    client->ReceiveStringCallback(OnStringMessage);
-    client->ReceiveBinaryCallback(OnBinaryMessage);
-
-    client->Send("Hello there!!!");
-    client->Send(buffer, 8, NetSocket::CopyMode::ZeroCopy);
-}
-
-void OnDisonnect(NetSocket::Server& server, std::string client_endpoint)
-{
-    std::cout << "Client Disconnect: " << client_endpoint << std::endl;
-    server.Broadcast("DISCONNECT --> " + client_endpoint);
-}
-
-void OnStringMessage(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client, std::string message)
-{
-    std::cout << "String: " << message << std::endl;
-}
-
-void OnBinaryMessage(NetSocket::Server& server, NetSocket::ClientConnection::Pointer client, void *data, uint32_t length)
-{
-    uint8_t *message = (uint8_t*)data;
-    std::cout << "Binary: 0x" << std::hex << static_cast<int>(message[0]) << std::dec << "... [" << length << " bytes]" << std::endl;
 }

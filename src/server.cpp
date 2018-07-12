@@ -4,6 +4,7 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
     acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
     context(asio::ssl::context::sslv23),
     secure(false),
+    use_callbacks(options.flags & NetSocket::ServerFlags::UseCallbacks),
     connect_callback(NULL),
     disconnect_callback(NULL)
 {
@@ -51,6 +52,65 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
     std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
 }
 
+NetSocket::Server::Event NetSocket::Server::WaitForNextEvent()
+{
+    NetSocket::Server::Event event;
+    if (!event_queue.empty())
+    {
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    else
+    {
+        do
+        {
+            io_service.run_one();
+            io_service.reset();
+        } while (event_queue.empty());
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    return event;
+}
+
+NetSocket::Server::Event NetSocket::Server::PollForNextEvent()
+{
+    NetSocket::Server::Event event;
+    if (!event_queue.empty())
+    {
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    else
+    {
+        io_service.poll();
+        if (!event_queue.empty())
+        {
+            event = event_queue.front();
+            event_queue.pop_front();
+        }
+        else
+        {
+            event.type = NetSocket::Server::EventType::None;
+            event.client = NULL;
+            event.string_data = "";
+            event.binary_data = NULL;
+            event.data_length = 0;
+        }
+    }
+    return event;
+}
+
+bool NetSocket::Server::Alive()
+{
+    return true;
+}
+
+int16_t NetSocket::Server::NumClients()
+{
+    return static_cast<uint16_t>(clients.size());
+}
+
 void NetSocket::Server::Run()
 {
     io_service.run();
@@ -71,11 +131,11 @@ void NetSocket::Server::StartAccept()
     ClientConnection::Pointer new_connection;
     if (secure)
     {
-        new_connection = ClientConnection::Create(this, acceptor.get_io_service(), context);
+        new_connection = ClientConnection::Create(this, acceptor.get_io_service(), context, use_callbacks);
     }
     else
     {
-        new_connection = ClientConnection::Create(this, acceptor.get_io_service());
+        new_connection = ClientConnection::Create(this, acceptor.get_io_service(), use_callbacks);
     }
     new_connection->Socket()->AsyncAccept(acceptor, std::bind(&Server::HandleAccept, this, new_connection, std::placeholders::_1));
     //acceptor.async_accept(new_connection->Socket(), std::bind(&Server::HandleAccept, this, new_connection, std::placeholders::_1));
@@ -98,16 +158,32 @@ void NetSocket::Server::HandleHandshake(NetSocket::ClientConnection::Pointer new
         new_connection->DisconnectCallback(std::bind(&Server::HandleDisconnect, this, std::placeholders::_1));
 
         clients[new_connection->Endpoint()] = new_connection;
-        if (connect_callback) connect_callback(*this, new_connection);
+        if (use_callbacks && connect_callback)
+        {
+            connect_callback(*this, new_connection);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Server::Event event = {NetSocket::Server::EventType::Connect, new_connection, std::string(""), NULL, 0};
+            event_queue.push_back(event);
+        }
 
         new_connection->Receive();
     }
 }
 
-void NetSocket::Server::HandleDisconnect(std::string endpoint)
+void NetSocket::Server::HandleDisconnect(NetSocket::ClientConnection::Pointer connection)
 {
-    clients.erase(endpoint);
-    if (disconnect_callback) disconnect_callback(*this, endpoint);
+    clients.erase(connection->Endpoint());
+    if (use_callbacks && disconnect_callback)
+    {
+        disconnect_callback(*this, connection);
+    }
+    else if (!use_callbacks)
+    {
+        NetSocket::Server::Event event = {NetSocket::Server::EventType::Disconnect, connection, std::string(""), NULL, 0};
+        event_queue.push_back(event);
+    }
 }
 
 void NetSocket::Server::Broadcast(std::string message)
@@ -131,7 +207,34 @@ void NetSocket::Server::ConnectCallback(std::function<void(Server&, ClientConnec
     connect_callback = callback;
 }
 
-void NetSocket::Server::DisconnectCallback(std::function<void(Server&, std::string)> callback)
+void NetSocket::Server::DisconnectCallback(std::function<void(Server&, ClientConnection::Pointer)> callback)
 {
     disconnect_callback = callback;
+}
+
+void NetSocket::Server::ClientSendIsComplete(ClientConnection::Pointer connection, void *data, uint32_t length)
+{
+    if (!use_callbacks)
+    {
+        NetSocket::Server::Event event = {NetSocket::Server::EventType::SendFinished, connection, std::string(""), data, length};
+        event_queue.push_back(event);
+    }
+}
+
+void NetSocket::Server::ClientReceivedStringData(ClientConnection::Pointer connection, std::string data)
+{
+    if (!use_callbacks)
+    {
+        NetSocket::Server::Event event = {NetSocket::Server::EventType::ReceiveString, connection, data, NULL, static_cast<uint32_t>(data.length())};
+        event_queue.push_back(event);
+    }
+}
+
+void NetSocket::Server::ClientReceivedBinaryData(ClientConnection::Pointer connection, void *data, uint32_t length)
+{
+    if (!use_callbacks)
+    {
+        NetSocket::Server::Event event = {NetSocket::Server::EventType::ReceiveBinary, connection, std::string(""), data, length};
+        event_queue.push_back(event);
+    }
 }
