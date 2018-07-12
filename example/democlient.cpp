@@ -16,40 +16,32 @@ int main(int argc, char **argv)
     //options.flags = NetSocket::ClientFlags::VerifyPeer;
     NetSocket::Client client("localhost", 8000, options);
 
-    // add callback functions
-    client.ConnectCallback(OnConnect);
-    client.DisconnectCallback(OnDisconnect);
-    client.ReceiveStringCallback(OnStringMessage);
-    client.ReceiveBinaryCallback(OnBinaryMessage);
-
-    // run indefinitey (quit if server closes connection)
-    client.Run();
+    // event loop
+    uint8_t buffer[6] = {65, 118, 5, 192, 42, 220};
+    while (client.Alive())
+    {
+        NetSocket::Client::Event event = client.WaitForNextEvent();
+        uint8_t* bin = reinterpret_cast<uint8_t*>(event.binary_data);
+        switch (event.type)
+        {
+            case NetSocket::Client::EventType::Connect:
+                std::cout << "CONNECT to server" << std::endl;
+                break;
+            case NetSocket::Client::EventType::Disconnect:
+                std::cout << "DISCONNECT from server" << std::endl;
+                break;
+            case NetSocket::Client::EventType::ReceiveString:
+                std::cout << "String: " << event.string_data << std::endl;
+                client.Send("I'm Alive!");
+                break;
+            case NetSocket::Client::EventType::ReceiveBinary:
+                std::cout << "Binary: 0x" << std::hex << static_cast<int>(bin[0]) << std::dec << "... [" << event.data_length << " bytes]" << std::endl;
+                client.Send(buffer, 6, NetSocket::CopyMode::MemCopy);
+                break;
+            default:
+                break;
+        }
+    }
 
     return 0;
-}
-
-void OnConnect(NetSocket::Client& client)
-{
-    std::cout << "CONNECT to server" << std::endl;
-}
-
-void OnDisconnect(NetSocket::Client& client)
-{
-    std::cout << "DISCONNECT from server" << std::endl;
-}
-
-void OnStringMessage(NetSocket::Client& client, std::string message)
-{
-    std::cout << "String: " << message << std::endl;
-
-    client.Send("I'm Alive!");
-}
-
-void OnBinaryMessage(NetSocket::Client& client, void *data, uint32_t length)
-{
-    uint8_t *message = (uint8_t*)data;
-    std::cout << "Binary: 0x" << std::hex << static_cast<int>(message[0]) << std::dec << "... [" << length << " bytes]" << std::endl;
-
-    uint8_t buffer[6] = {65, 118, 5, 192, 42, 220};
-    client.Send(buffer, 6, NetSocket::CopyMode::MemCopy);
 }

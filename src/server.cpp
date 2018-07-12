@@ -4,7 +4,7 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
     acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
     context(asio::ssl::context::sslv23),
     secure(false),
-    use_callbacks(options.flags & NetSocket::ServerFlags::UseCallbacks),
+    use_callbacks(options.flags & NetSocket::GeneralFlags::UseCallbacks),
     connect_callback(NULL),
     disconnect_callback(NULL)
 {

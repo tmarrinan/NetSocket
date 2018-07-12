@@ -2,12 +2,12 @@
 
 NetSocket::ServerOptions NetSocket::CreateServerOptions()
 {
-    NetSocket::ServerOptions options = {NULL, NULL, NULL, NetSocket::ServerFlags::UseCallbacks};
+    NetSocket::ServerOptions options = {NULL, NULL, NULL, NetSocket::GeneralFlags::None};
     return options;
 }
 
 NetSocket::ClientOptions NetSocket::CreateClientOptions()
 {
-    ClientOptions options = {false, 0};
+    ClientOptions options = {false, NetSocket::GeneralFlags::None};
     return options;
 }

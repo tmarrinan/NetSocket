@@ -2,6 +2,8 @@
 
 NetSocket::Client::Client(std::string host, uint16_t port, NetSocket::ClientOptions& options) :
     context(asio::ssl::context::sslv23),
+    alive(true),
+    use_callbacks(options.flags & NetSocket::GeneralFlags::UseCallbacks),
     connect_callback(NULL),
     disconnect_callback(NULL),
     receive_string_callback(NULL),
@@ -35,6 +37,68 @@ NetSocket::Client::Client(std::string host, uint16_t port, NetSocket::ClientOpti
     //asio::connect(socket, endpoint_iterator);
 }
 
+NetSocket::Client::Event NetSocket::Client::WaitForNextEvent()
+{
+    NetSocket::Client::Event event;
+    if (!event_queue.empty())
+    {
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    else
+    {
+        do
+        {
+            io_service.run_one();
+            io_service.reset();
+        } while (event_queue.empty());
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    return event;
+}
+
+NetSocket::Client::Event NetSocket::Client::PollForNextEvent()
+{
+    NetSocket::Client::Event event;
+    if (!event_queue.empty())
+    {
+        event = event_queue.front();
+        event_queue.pop_front();
+    }
+    else
+    {
+        io_service.poll();
+        if (!event_queue.empty())
+        {
+            event = event_queue.front();
+            event_queue.pop_front();
+        }
+        else
+        {
+            event.type = NetSocket::Client::EventType::None;
+            event.string_data = "";
+            event.binary_data = NULL;
+            event.data_length = 0;
+        }
+    }
+    return event;
+}
+bool NetSocket::Client::Alive()
+{
+    return alive;
+}
+
+void NetSocket::Client::Run()
+{
+    io_service.run();
+}
+
+void NetSocket::Client::Poll()
+{
+    io_service.poll();
+}
+
 bool NetSocket::Client::HandleVerify(bool preverified, asio::ssl::verify_context& ctx)
 {
     char subject_name[256];
@@ -60,7 +124,15 @@ void NetSocket::Client::HandleHandshake(const asio::error_code& error)
 {
     if (!error)
     {
-        if (connect_callback) connect_callback(*this);
+        if (use_callbacks && connect_callback)
+        {
+            connect_callback(*this);
+        }
+        else if (!use_callbacks) {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::Connect, std::string(""), NULL, 0};
+            event_queue.push_back(event);
+        }
+
         Receive();
     }
     else
@@ -68,16 +140,6 @@ void NetSocket::Client::HandleHandshake(const asio::error_code& error)
         printf("HANDSHAKE ERROR: %s\n", error.message().c_str());
         exit(1);
     }
-}
-
-void NetSocket::Client::Run()
-{
-    io_service.run();
-}
-
-void NetSocket::Client::Poll()
-{
-    io_service.poll();
 }
 
 void NetSocket::Client::Send(std::string message)
@@ -90,11 +152,12 @@ void NetSocket::Client::Send(std::string message)
     memcpy(buffer + 5, message.c_str(), length);
 
     asio::const_buffer data = asio::buffer(const_cast<const uint8_t*>(buffer), 5 + length);
+    SendData send_data = {data, true};
 
-    send_queue.push_back(data);
+    send_queue.push_back(send_data);
     if (send_queue.size() == 1)
     {
-        socket->AsyncWrite(data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+        socket->AsyncWrite(send_data.data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data));
         //asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
     }
 }
@@ -110,11 +173,12 @@ void NetSocket::Client::Send(const void *message, uint32_t length, CopyMode mode
         memcpy(buffer+5, message, length);
 
         asio::const_buffer data = asio::buffer(const_cast<const uint8_t*>(buffer), 5 + length);
+        SendData send_data = {data, true};
 
-        send_queue.push_back(data);
+        send_queue.push_back(send_data);
         if (send_queue.size() == 1)
         {
-            socket->AsyncWrite(data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+            socket->AsyncWrite(send_data.data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data));
             //asio::async_write(socket, asio::buffer(buffer, 5 + length), std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
         }
     }
@@ -127,26 +191,36 @@ void NetSocket::Client::Send(const void *message, uint32_t length, CopyMode mode
 
         asio::const_buffer data1 = asio::buffer(const_cast<const uint8_t*>(buffer), 5);
         asio::const_buffer data2 = asio::buffer(const_cast<const void*>(message), length);
+        SendData send_data1 = {data1, true};
+        SendData send_data2 = {data2, false};
 
-        send_queue.push_back(data1);
-        send_queue.push_back(data2);
+        send_queue.push_back(send_data1);
+        send_queue.push_back(send_data2);
         if (send_queue.size() == 2)
         {
-            socket->AsyncWrite(data1, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
+            socket->AsyncWrite(send_data1.data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data1));
             //asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
         }
     }
 }
 
-void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred, uint8_t *send_buffer)
+void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_transferred, SendData& send_data)
 {
     // write complete
+    uint8_t *buffer = (uint8_t*)send_data.data.data();
+    uint32_t length = send_data.data.size();
     send_queue.pop_front();
+    if (send_data.delete_on_completion)
+    {
+        delete[] buffer;
+        buffer = NULL;
+        length = 0;
+    }
+
     if (send_queue.size() > 0)
     {
-        socket->AsyncWrite(send_queue.front(), std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, (uint8_t*)send_queue.front().data()));
+        socket->AsyncWrite(send_queue.front().data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
     }
-    delete[] send_buffer;
 }
 
 void NetSocket::Client::Receive()
@@ -161,7 +235,16 @@ void NetSocket::Client::HandleReceiveHeader(const asio::error_code& error, size_
     //if (error == asio::error::eof || error == asio::error::connection_reset) // disconnect
     if (error)
     {
-        if (disconnect_callback) disconnect_callback(*this);
+        if (use_callbacks && disconnect_callback)
+        {
+            disconnect_callback(*this);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::Disconnect, std::string(""), NULL, 0};
+            event_queue.push_back(event);
+        }
+        alive = false;
     }
     else
     {
@@ -189,13 +272,30 @@ void NetSocket::Client::HandleReceiveStringData(const asio::error_code& error, s
     if (error)
     {
         delete[] receive_data;
-        if (disconnect_callback) disconnect_callback(*this);
+        if (use_callbacks && disconnect_callback)
+        {
+            disconnect_callback(*this);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::Disconnect, std::string(""), NULL, 0};
+            event_queue.push_back(event);
+        }
+        alive = false;
     }
     else
     {
         std::string receive_string = std::string(reinterpret_cast<char*>(receive_data), receive_size);
         delete[] receive_data;
-        if (receive_string_callback) receive_string_callback(*this, receive_string);
+        if (use_callbacks && receive_string_callback) 
+        {
+            receive_string_callback(*this, receive_string);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::ReceiveString, receive_string, NULL, static_cast<uint32_t>(receive_string.length())};
+            event_queue.push_back(event);
+        }
 
         Receive();
     }
@@ -207,12 +307,32 @@ void NetSocket::Client::HandleReceiveBinaryData(const asio::error_code& error, s
     if (error)
     {
         delete[] receive_data;
-        if (disconnect_callback) disconnect_callback(*this);
+        if (use_callbacks && disconnect_callback)
+        {
+            disconnect_callback(*this);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::Disconnect, std::string(""), NULL, 0};
+            event_queue.push_back(event);
+        }
+        alive = false;
     }
     else
     {
-        if (receive_binary_callback) receive_binary_callback(*this, receive_data, receive_size);
-        else delete[] receive_data;
+        if (use_callbacks && receive_binary_callback)
+        {
+            receive_binary_callback(*this, receive_data, receive_size);
+        }
+        else if (!use_callbacks)
+        {
+            NetSocket::Client::Event event = {NetSocket::Client::EventType::ReceiveBinary, std::string(""), receive_data, receive_size};
+            event_queue.push_back(event);
+        }
+        else
+        {
+            delete[] receive_data;
+        }
 
         Receive();
     }
