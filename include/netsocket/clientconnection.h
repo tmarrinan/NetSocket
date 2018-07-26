@@ -19,6 +19,7 @@ private:
     typedef struct SendData {
         asio::const_buffer data;
         bool delete_on_completion;
+        bool currently_sending;
     } SendData;
 
     Server *host;
@@ -46,6 +47,9 @@ public:
     NETSOCKET_EXPORT std::string Endpoint();
     NETSOCKET_EXPORT std::string IpAddress();
     NETSOCKET_EXPORT uint16_t Port();
+    NETSOCKET_EXPORT std::string LocalEndpoint();
+    NETSOCKET_EXPORT std::string LocalIpAddress();
+    NETSOCKET_EXPORT uint16_t LocalPort();
     NETSOCKET_EXPORT void Send(std::string message);
     NETSOCKET_EXPORT void Send(const void *message, uint32_t length, CopyMode mode);
     NETSOCKET_EXPORT void Receive();

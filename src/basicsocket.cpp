@@ -20,6 +20,21 @@ uint16_t NetSocket::BasicSocket::GetRemotePort()
     return basic_socket.remote_endpoint().port();
 }
 
+std::string NetSocket::BasicSocket::GetLocalEndpoint()
+{
+    return GetLocalAddress() + ":" + std::to_string(GetLocalPort());
+}
+
+std::string NetSocket::BasicSocket::GetLocalAddress()
+{
+    return basic_socket.local_endpoint().address().to_string();
+}
+
+uint16_t NetSocket::BasicSocket::GetLocalPort()
+{
+    return basic_socket.local_endpoint().port();
+}
+
 void NetSocket::BasicSocket::AsyncConnect(tcp::resolver::iterator endpoint_iterator, std::function<void(const asio::error_code&, tcp::resolver::iterator)> complete)
 {
     asio::async_connect(basic_socket, endpoint_iterator, complete);

@@ -99,6 +99,36 @@ void NetSocket::Client::Poll()
     io_service.poll();
 }
 
+std::string NetSocket::Client::Endpoint()
+{
+    return socket->GetRemoteEndpoint();
+}
+
+std::string NetSocket::Client::IpAddress()
+{
+    return socket->GetRemoteAddress();
+}
+
+uint16_t NetSocket::Client::Port()
+{
+    return socket->GetRemotePort();
+}
+
+std::string NetSocket::Client::LocalEndpoint()
+{
+    return socket->GetLocalEndpoint();
+}
+
+std::string NetSocket::Client::LocalIpAddress()
+{
+    return socket->GetLocalAddress();
+}
+
+uint16_t NetSocket::Client::LocalPort()
+{
+    return socket->GetLocalPort();
+}
+
 bool NetSocket::Client::HandleVerify(bool preverified, asio::ssl::verify_context& ctx)
 {
     char subject_name[256];
@@ -215,6 +245,12 @@ void NetSocket::Client::HandleSend(const asio::error_code& error, size_t bytes_t
         delete[] buffer;
         buffer = NULL;
         length = 0;
+    }
+
+    if (!use_callbacks)
+    {
+        NetSocket::Client::Event event = {NetSocket::Client::EventType::SendFinished, std::string(""), buffer, length};
+        event_queue.push_back(event);
     }
 
     if (send_queue.size() > 0)

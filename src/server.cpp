@@ -35,12 +35,15 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
         context.use_certificate_chain_file(options.server_cert);
         context.use_private_key_file(options.server_cert, asio::ssl::context::pem);
         context.use_tmp_dh_file(options.dh_file);
-        const char *ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-"
+        /*const char *ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-"
                               "GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-"
                               "ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-"
                               "AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-"
                               "DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:"
                               "!RC4:!3DES:!MD5:!PSK";
+        */
+        const char *ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:!aNULL:!eNULL:!EXPORT:"
+                              "!DES:!RC4:!3DES:!MD5:!PSK";
         if (SSL_CTX_set_cipher_list(context.native_handle(), ciphers) != 1)
         {
             fprintf(stderr, "Error: could not set cipher list\n");
@@ -49,7 +52,7 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
     }
 
     StartAccept();
-    std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
+    //std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
 }
 
 NetSocket::Server::Event NetSocket::Server::WaitForNextEvent()

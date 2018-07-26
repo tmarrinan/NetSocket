@@ -51,6 +51,21 @@ uint16_t NetSocket::ClientConnection::Port()
     return socket->GetRemotePort();
 }
 
+std::string NetSocket::ClientConnection::LocalEndpoint()
+{
+    return socket->GetLocalEndpoint();
+}
+
+std::string NetSocket::ClientConnection::LocalIpAddress()
+{
+    return socket->GetLocalAddress();
+}
+
+uint16_t NetSocket::ClientConnection::LocalPort()
+{
+    return socket->GetLocalPort();
+}
+
 void NetSocket::ClientConnection::Send(std::string message)
 {
     uint32_t length = message.length() + 1;
@@ -61,12 +76,14 @@ void NetSocket::ClientConnection::Send(std::string message)
     memcpy(buffer + 5, message.c_str(), length);
 
     asio::const_buffer data = asio::buffer(const_cast<const uint8_t*>(buffer), 5 + length);
-    SendData send_data = {data, true};
+    SendData send_data = {data, true, false};
 
     send_queue.push_back(send_data);
     if (send_queue.size() == 1)
     {
-        socket->AsyncWrite(send_data.data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data));
+        send_queue.front().currently_sending = true;
+        socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
+        //send_queue.pop_front();
         //asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
     }
 }
@@ -82,12 +99,14 @@ void NetSocket::ClientConnection::Send(const void *message, uint32_t length, Cop
         memcpy(buffer+5, message, length);
 
         asio::const_buffer data = asio::buffer(const_cast<const uint8_t*>(buffer), 5 + length);
-        SendData send_data = {data, true};
+        SendData send_data = {data, true, false};
         
         send_queue.push_back(send_data);
         if (send_queue.size() == 1)
         {
-            socket->AsyncWrite(send_data.data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data));
+            send_queue.front().currently_sending = true;
+            socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
+            //send_queue.pop_front();
             //asio::async_write(socket, asio::buffer(buffer, 5 + length), std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
         }
     }
@@ -100,14 +119,16 @@ void NetSocket::ClientConnection::Send(const void *message, uint32_t length, Cop
 
         asio::const_buffer data1 = asio::buffer(const_cast<const uint8_t*>(buffer), 5);
         asio::const_buffer data2 = asio::buffer(const_cast<const void*>(message), length);
-        SendData send_data1 = {data1, true};
-        SendData send_data2 = {data2, false};
+        SendData send_data1 = {data1, true, false};
+        SendData send_data2 = {data2, false, false};
 
         send_queue.push_back(send_data1);
         send_queue.push_back(send_data2);
         if (send_queue.size() == 2)
         {
-            socket->AsyncWrite(send_data1.data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_data1));
+            send_queue.front().currently_sending = true;
+            socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
+            //send_queue.pop_front();
             //asio::async_write(socket, data, std::bind(&Client::HandleSend, this, std::placeholders::_1, std::placeholders::_2, buffer));
         }
     }
@@ -115,7 +136,6 @@ void NetSocket::ClientConnection::Send(const void *message, uint32_t length, Cop
 
 void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size_t bytes_transferred, SendData& send_data)
 {
-    // write complete
     uint8_t *buffer = (uint8_t*)send_data.data.data();
     uint32_t length = send_data.data.size();
     send_queue.pop_front();
@@ -128,9 +148,11 @@ void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size
 
     host->ClientSendIsComplete(shared_from_this(), buffer, length);
 
-    if (send_queue.size() > 0)
+    if (send_queue.size() > 0 && !send_queue.front().currently_sending)
     {
         socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
+        //socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
+        //send_queue.pop_front();
     }
 }
 

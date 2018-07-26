@@ -13,6 +13,9 @@ public:
     NETSOCKET_EXPORT std::string GetRemoteEndpoint();
     NETSOCKET_EXPORT std::string GetRemoteAddress();
     NETSOCKET_EXPORT uint16_t GetRemotePort();
+    NETSOCKET_EXPORT std::string GetLocalEndpoint();
+    NETSOCKET_EXPORT std::string GetLocalAddress();
+    NETSOCKET_EXPORT uint16_t GetLocalPort();
     NETSOCKET_EXPORT void AsyncConnect(tcp::resolver::iterator endpoint_iterator, std::function<void(const asio::error_code&, tcp::resolver::iterator)> complete);
     NETSOCKET_EXPORT void AsyncAccept(tcp::acceptor& acceptor, std::function<void(const asio::error_code&)> complete);
     NETSOCKET_EXPORT void AsyncHandshake(asio::ssl::stream_base::handshake_type type, std::function<void(const asio::error_code&)> complete);

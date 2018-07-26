@@ -28,6 +28,21 @@ uint16_t NetSocket::SecureSocket::GetRemotePort()
     return secure_socket.lowest_layer().remote_endpoint().port();
 }
 
+std::string NetSocket::SecureSocket::GetLocalEndpoint()
+{
+    return GetLocalAddress() + ":" + std::to_string(GetLocalPort());
+}
+
+std::string NetSocket::SecureSocket::GetLocalAddress()
+{
+    return secure_socket.lowest_layer().local_endpoint().address().to_string();
+}
+
+uint16_t NetSocket::SecureSocket::GetLocalPort()
+{
+    return secure_socket.lowest_layer().local_endpoint().port();
+}
+
 void NetSocket::SecureSocket::AsyncConnect(tcp::resolver::iterator endpoint_iterator, std::function<void(const asio::error_code&, tcp::resolver::iterator)> complete)
 {
     asio::async_connect(secure_socket.lowest_layer(), endpoint_iterator, complete);
