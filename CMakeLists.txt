@@ -71,6 +71,18 @@ install( DIRECTORY ${CMAKE_SOURCE_DIR}/include/
     DESTINATION include 
     FILES_MATCHING PATTERN "*.h*"
     )
+install( DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/asio-1.12.1/include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h"
+    )
+install( DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/asio-1.12.1/include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.hpp"
+    )
+install( DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/asio-1.12.1/include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.ipp"
+    )
 install( TARGETS netsocket
     LIBRARY DESTINATION lib COMPONENT libraries
     )
