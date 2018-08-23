@@ -5,6 +5,15 @@ NetSocket::BasicSocket::BasicSocket(asio::io_service& io_service) :
 {
 }
 
+void NetSocket::BasicSocket::EnableTcpNoDelay(bool tcp_no_delay)
+{
+    if (tcp_no_delay)
+    {
+        asio::ip::tcp::no_delay option(true);
+        basic_socket.set_option(option);
+    }
+}
+
 std::string NetSocket::BasicSocket::GetRemoteEndpoint()
 {
     return GetRemoteAddress() + ":" + std::to_string(GetRemotePort());

@@ -29,6 +29,7 @@ NetSocket::Client::Client(std::string host, uint16_t port, NetSocket::ClientOpti
     {
         socket = new NetSocket::BasicSocket(io_service);
     }
+    tcp_no_delay = options.flags & NetSocket::GeneralFlags::TcpNoDelay;
 
     tcp::resolver resolver(io_service);
     tcp::resolver::query query(host, std::to_string(port), tcp::resolver::query::canonical_name);
@@ -146,6 +147,7 @@ void NetSocket::Client::HandleConnect(const asio::error_code& error, tcp::resolv
 {
     if (!error)
     {
+        socket->EnableTcpNoDelay(tcp_no_delay);
         socket->AsyncHandshake(SslSocket::client, std::bind(&Client::HandleHandshake, this, std::placeholders::_1));
     }
 }

@@ -4,6 +4,10 @@ NetSocket::Socket::Socket()
 {
 }
 
+void NetSocket::Socket::EnableTcpNoDelay(bool tcp_no_delay)
+{
+}
+
 std::string NetSocket::Socket::GetRemoteEndpoint()
 {
     return "";

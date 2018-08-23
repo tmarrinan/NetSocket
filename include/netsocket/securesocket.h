@@ -10,6 +10,7 @@ private:
 public:
     NETSOCKET_EXPORT SecureSocket(asio::io_service& io_service, asio::ssl::context& context);
     NETSOCKET_EXPORT SecureSocket(asio::io_service& io_service, asio::ssl::context& context, std::function<bool(bool, asio::ssl::verify_context&)> verify);
+    NETSOCKET_EXPORT void EnableTcpNoDelay(bool tcp_no_delay);
     NETSOCKET_EXPORT std::string GetRemoteEndpoint();
     NETSOCKET_EXPORT std::string GetRemoteAddress();
     NETSOCKET_EXPORT uint16_t GetRemotePort();

@@ -22,6 +22,7 @@ private:
     std::string key_passwd;
     bool secure;
     bool use_callbacks;
+    bool tcp_no_delay;
     std::list<Event> event_queue;
     std::map<std::string, ClientConnection::Pointer> clients;
     std::function<void(Server&, ClientConnection::Pointer)> connect_callback;

@@ -50,6 +50,7 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
         }
         secure = true;
     }
+    tcp_no_delay = options.flags & NetSocket::GeneralFlags::TcpNoDelay;
 
     StartAccept();
     //std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
@@ -148,6 +149,7 @@ void NetSocket::Server::HandleAccept(NetSocket::ClientConnection::Pointer new_co
 {
     if (!error)
     {
+        new_connection->Socket()->EnableTcpNoDelay(tcp_no_delay);
         new_connection->Socket()->AsyncHandshake(SslSocket::server, std::bind(&Server::HandleHandshake, this, new_connection, std::placeholders::_1));
     }
 

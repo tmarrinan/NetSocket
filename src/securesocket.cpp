@@ -13,6 +13,15 @@ NetSocket::SecureSocket::SecureSocket(asio::io_service& io_service, asio::ssl::c
     secure_socket.set_verify_callback(verify);
 }
 
+void NetSocket::SecureSocket::EnableTcpNoDelay(bool tcp_no_delay)
+{
+    if (tcp_no_delay)
+    {
+        asio::ip::tcp::no_delay option(true);
+       secure_socket.lowest_layer().set_option(option);
+    }
+}
+
 std::string NetSocket::SecureSocket::GetRemoteEndpoint()
 {
     return GetRemoteAddress() + ":" + std::to_string(GetRemotePort());

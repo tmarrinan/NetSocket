@@ -9,6 +9,7 @@ private:
     tcp::socket basic_socket;
 public:
     NETSOCKET_EXPORT BasicSocket(asio::io_service& io_service);
+    NETSOCKET_EXPORT void EnableTcpNoDelay(bool tcp_no_delay);
     NETSOCKET_EXPORT std::string GetRemoteEndpoint();
     NETSOCKET_EXPORT std::string GetRemoteAddress();
     NETSOCKET_EXPORT uint16_t GetRemotePort();

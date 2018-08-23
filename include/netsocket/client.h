@@ -30,6 +30,7 @@ private:
     NetSocket::Socket *socket;
     bool alive;
     bool use_callbacks;
+    bool tcp_no_delay;
     std::list<Event> event_queue;
     uint8_t receive_header[5];
     uint32_t receive_size;
