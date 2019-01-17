@@ -14,6 +14,28 @@ void NetSocket::BasicSocket::EnableTcpNoDelay(bool tcp_no_delay)
     }
 }
 
+void NetSocket::BasicSocket::SetSendBufferSize(int send_buf_size)
+{
+    asio::socket_base::send_buffer_size option(send_buf_size);
+    basic_socket.set_option(option);
+
+    asio::socket_base::send_buffer_size get_option;
+    basic_socket.get_option(get_option);
+    int size = get_option.value();
+    printf("send_buffer_size: %d\n", size);
+}
+
+void NetSocket::BasicSocket::SetRecvBufferSize(int recv_buf_size)
+{
+    asio::socket_base::receive_buffer_size option(recv_buf_size);
+    basic_socket.set_option(option);
+
+    asio::socket_base::receive_buffer_size get_option;
+    basic_socket.get_option(get_option);
+    int size = get_option.value();
+    printf("receive_buffer_size: %d\n", size);
+}
+
 std::string NetSocket::BasicSocket::GetRemoteEndpoint()
 {
     return GetRemoteAddress() + ":" + std::to_string(GetRemotePort());

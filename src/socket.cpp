@@ -8,6 +8,14 @@ void NetSocket::Socket::EnableTcpNoDelay(bool tcp_no_delay)
 {
 }
 
+void NetSocket::Socket::SetSendBufferSize(int send_buf_size)
+{
+}
+
+void NetSocket::Socket::SetRecvBufferSize(int recv_buf_size)
+{
+}
+
 std::string NetSocket::Socket::GetRemoteEndpoint()
 {
     return "";

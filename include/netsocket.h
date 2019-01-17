@@ -22,10 +22,14 @@ namespace NetSocket {
         const char *dh_file;
         const char *encrypted_key_passwd;
         uint16_t flags;
+        int send_buf_size;
+        int recv_buf_size;
     } ServerOptions;
     typedef struct ClientOptions {
         bool secure;
         uint16_t flags;
+        int send_buf_size;
+        int recv_buf_size;
     } ClientOptions;
     typedef asio::ssl::stream<asio::ip::tcp::socket> SslSocket;
 

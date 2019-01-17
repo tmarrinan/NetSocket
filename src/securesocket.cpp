@@ -18,8 +18,30 @@ void NetSocket::SecureSocket::EnableTcpNoDelay(bool tcp_no_delay)
     if (tcp_no_delay)
     {
         asio::ip::tcp::no_delay option(true);
-       secure_socket.lowest_layer().set_option(option);
+        secure_socket.lowest_layer().set_option(option);
     }
+}
+
+void NetSocket::SecureSocket::SetSendBufferSize(int send_buf_size)
+{
+    asio::socket_base::send_buffer_size option(send_buf_size);
+    secure_socket.lowest_layer().set_option(option);
+
+    asio::socket_base::send_buffer_size get_option;
+    secure_socket.lowest_layer().get_option(get_option);
+    int size = get_option.value();
+    printf("send_buffer_size: %d\n", size);
+}
+
+void NetSocket::SecureSocket::SetRecvBufferSize(int recv_buf_size)
+{
+    asio::socket_base::receive_buffer_size option(recv_buf_size);
+    secure_socket.lowest_layer().set_option(option);
+
+    asio::socket_base::receive_buffer_size get_option;
+    secure_socket.lowest_layer().get_option(get_option);
+    int size = get_option.value();
+    printf("receive_buffer_size: %d\n", size);
 }
 
 std::string NetSocket::SecureSocket::GetRemoteEndpoint()

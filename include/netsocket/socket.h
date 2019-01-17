@@ -8,6 +8,8 @@ class NetSocket::Socket
 public:
     NETSOCKET_EXPORT Socket();
     NETSOCKET_EXPORT virtual void EnableTcpNoDelay(bool tcp_no_delay);
+    NETSOCKET_EXPORT virtual void SetSendBufferSize(int send_buf_size);
+    NETSOCKET_EXPORT virtual void SetRecvBufferSize(int recv_buf_size);
     NETSOCKET_EXPORT virtual std::string GetRemoteEndpoint();
     NETSOCKET_EXPORT virtual std::string GetRemoteAddress();
     NETSOCKET_EXPORT virtual uint16_t GetRemotePort();

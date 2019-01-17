@@ -11,8 +11,10 @@ int main(int argc, char **argv)
 {
     // create client
     NetSocket::ClientOptions options = NetSocket::CreateClientOptions();
-    options.secure = true;
+    options.secure = false;
     options.flags = NetSocket::GeneralFlags::None; 
+    options.send_buf_size = 131072;
+    options.recv_buf_size = 131072;
     //options.flags = NetSocket::ClientFlags::VerifyPeer;
     NetSocket::Client client("localhost", 8000, options);
 

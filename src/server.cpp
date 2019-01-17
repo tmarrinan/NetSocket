@@ -51,6 +51,8 @@ NetSocket::Server::Server(uint16_t port, NetSocket::ServerOptions& options) :
         secure = true;
     }
     tcp_no_delay = options.flags & NetSocket::GeneralFlags::TcpNoDelay;
+    send_buf_size = options.send_buf_size;
+    recv_buf_size = options.recv_buf_size;
 
     StartAccept();
     //std::cout << "[NetSocket::Server] Now listening at " << acceptor.local_endpoint() << std::endl;
@@ -150,6 +152,8 @@ void NetSocket::Server::HandleAccept(NetSocket::ClientConnection::Pointer new_co
     if (!error)
     {
         new_connection->Socket()->EnableTcpNoDelay(tcp_no_delay);
+        if (send_buf_size > 0) new_connection->Socket()->SetSendBufferSize(send_buf_size);
+        if (recv_buf_size > 0) new_connection->Socket()->SetRecvBufferSize(recv_buf_size);
         new_connection->Socket()->AsyncHandshake(SslSocket::server, std::bind(&Server::HandleHandshake, this, new_connection, std::placeholders::_1));
     }
 

@@ -150,6 +150,7 @@ void NetSocket::ClientConnection::HandleSend(const asio::error_code& error, size
 
     if (send_queue.size() > 0 && !send_queue.front().currently_sending)
     {
+        send_queue.front().currently_sending = true;
         socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
         //socket->AsyncWrite(send_queue.front().data, std::bind(&ClientConnection::HandleSend, this, std::placeholders::_1, std::placeholders::_2, send_queue.front()));
         //send_queue.pop_front();

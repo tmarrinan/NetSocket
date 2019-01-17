@@ -23,6 +23,8 @@ private:
     bool secure;
     bool use_callbacks;
     bool tcp_no_delay;
+    int send_buf_size;
+    int recv_buf_size;
     std::list<Event> event_queue;
     std::map<std::string, ClientConnection::Pointer> clients;
     std::function<void(Server&, ClientConnection::Pointer)> connect_callback;
